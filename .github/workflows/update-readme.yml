@@ -1,0 +1,43 @@
+name: Update README
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '[0-9][0-9][0-9][0-9]/**/*.md'
+      - 'scripts/update_readme.py'
+      - '.github/workflows/update-readme.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate README
+        run: python scripts/update_readme.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet README.md; then
+            echo "No README changes."
+            exit 0
+          fi
+          git add README.md
+          git commit -m "chore: update README with latest daily summaries"
+          git push
