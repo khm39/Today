@@ -1,6 +1,9 @@
 name: Update README
 
 on:
+  workflow_run:
+    workflows: ["Auto-merge PR"]
+    types: [completed]
   push:
     branches: [main]
     paths:
@@ -12,13 +15,21 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: update-readme
+  cancel-in-progress: false
+
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -39,5 +50,5 @@ jobs:
             exit 0
           fi
           git add README.md
-          git commit -m "chore: update README with latest daily summaries"
+          git commit -m "chore: update README with latest daily summary"
           git push
